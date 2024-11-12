@@ -24,8 +24,7 @@ namespace Domaci2
                 }
                 
                 
-                newDate = isCorrectDate.ToString("yyyy/MM/dd");
-                Console.WriteLine(newDate);
+                newDate = isCorrectDate.ToString("yyyy/MM/dd");                
                 break;
             }
             return newDate;
@@ -118,8 +117,7 @@ namespace Domaci2
             string enteredName = Console.ReadLine();
             Console.Write("Unesite prezime - ");
             string enteredSurname = Console.ReadLine();
-            bool exists = false;
-            Console.WriteLine(enteredName + " " + enteredSurname);
+            bool exists = false;            
             foreach (var user in users)
             {
                 if (user["ime"].ToLower() == enteredName.Trim().ToLower() 
@@ -145,22 +143,32 @@ namespace Domaci2
             do
             {              
                 Console.Clear();
-                Console.WriteLine("Unesite ID koji zelite urediti - ");
+                Console.Write("Unesite ID koji zelite urediti - ");
                 string enteredId = Console.ReadLine();
                 foreach (var user in users)
                 {
                     if (user["id"] == enteredId)
                     {
+                        Console.WriteLine($"Trenutno ime {user["ime"]}");
                         Console.Write("Unesite novo ime: ");
                         string editedName = Console.ReadLine();
+                        Console.WriteLine();
+
+                        Console.WriteLine($"Trenutno prezime {user["prezime"]}");
                         Console.Write("Unestie novo prezime: ");
                         string editedSurname = Console.ReadLine();
+                        Console.WriteLine();
+
+                        Console.WriteLine($"Trenutni datum rođenja {user["datum_rodenja"]}");
                         string newDate = DateValidation();
+                        Console.WriteLine();
 
                         user["ime"] = editedName;
                         user["prezime"] = editedSurname;
                         user["datum_rodenja"] = newDate;
                         isValid = true;
+                        Console.WriteLine("Uspjesno unijeti novi podaci za korisnika.");
+                        Console.ReadKey();
                     }
                 }
                 if (!isValid)
@@ -185,6 +193,7 @@ namespace Domaci2
         static void UsersOlderThan()
         {
             Console.Clear();
+            Console.WriteLine("Pregled korisnika starijih od 30 godina...\n");
             DateTime currentDate = DateTime.Now;
             foreach (var user in users)
             {
