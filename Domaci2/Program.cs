@@ -31,31 +31,9 @@ namespace Domaci2
             return newDate;
         }
         static void EnterNewUser()
-        {
-            string newId;
-            bool containsId;
-
-            do
-            {
-
-                Console.Clear();
-                Console.WriteLine("Unos novog korisnika --->");
-                containsId = true;
-                Console.Write("Unesite ID korisnika - ");
-                newId = Console.ReadLine();
-                foreach (var user in users)
-                {
-                    if (user["id"] == newId || newId.Trim() == "")
-                    {
-                        Console.WriteLine("Ovaj ID je zauzet ili nije nista uneseno, molimo vas unesite drugi.");
-                        containsId = false;
-                        Console.ReadKey();
-                        break;
-                       
-                    }
-                    
-                }
-            } while (!containsId);
+         {            
+            Console.Clear();
+            Console.WriteLine("Unos novog korisnika --->");             
 
             Console.Write("Unesite ime korisnika - ");
             string newName = Console.ReadLine();
@@ -67,7 +45,7 @@ namespace Domaci2
             Console.WriteLine("Uspjesno ste unijeli novog korisnika.");
             
             users.Add(new Dictionary<string, string> {
-                {"id", newId },
+                {"id", (users.Count+1).ToString() },
                 {"ime", newName },
                 {"prezime", newSurname },
                 {"datum_rodenja", newDate }
@@ -301,19 +279,20 @@ namespace Domaci2
         {
             Dictionary<string, string> user1 = new Dictionary<string, string> 
             {
-                {"id", "1" },
+                {"id", (users.Count+1).ToString() },
                 {"ime", "Mirko"},
                 {"prezime", "Jerkovic" },
                 {"datum_rodenja", "1999/05/11" }
             };
+            users.Add(user1);
             Dictionary<string, string> user2 = new Dictionary<string, string>
             {
-                {"id", "2" },
+                {"id", (users.Count+1).ToString() },
                 {"ime", "Slaven"},
                 {"prezime", "Bilic" },
                 {"datum_rodenja", "1970/05/17" }
             };
-            users.Add(user1);
+            
             users.Add(user2);
             bool closeApp = false;
             while (!closeApp)
