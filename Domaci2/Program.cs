@@ -290,8 +290,8 @@ namespace Domaci2
 
             }
         }
-        //account part
 
+        //account part
         static void AccountInDeficit()
                 {
                     bool isInMinus = false;
@@ -362,10 +362,14 @@ namespace Domaci2
                 switch (enteredValue)
                 {
 
-                    case "1":     
+                    case "1":  
+                        DisplayTransactionMenu(userId,"tekuci");
+                        break;
                     case "2":
+                        DisplayTransactionMenu(userId, "ziro");
+                        break;
                     case "3":
-                        DisplayTransactionMenu(userId, enteredValue);
+                        DisplayTransactionMenu(userId, "prepaid");
                         break;
                     case "0":
                         exit = true;
@@ -378,7 +382,210 @@ namespace Domaci2
 
             }
         }
-        static void EnterTransactionMenu()
+        
+        //validation for transactions
+        static double GetAmount()
+        {
+            double amountDecimal;
+            while (true)
+	        {
+                Console.Clear();
+                Console.WriteLine("Unesite iznos transakcije:");
+                string amount = Console.ReadLine();
+                if (!double.TryParse(amount, out amountDecimal) || amountDecimal <= 0)
+                {
+                    Console.WriteLine("Neispravan iznos. Pokusaj ponovno.");
+                    Console.ReadKey();
+                    continue;
+                }
+                break;
+	        }
+            return amountDecimal;
+            
+        }
+        static string GetTypeOfTransaction()
+        {
+            string type;
+            while (true)
+	        {
+                Console.Clear();
+                Console.WriteLine("Unesite tip transakcije (prihod/rashod):");
+                type = Console.ReadLine().ToLower();
+
+                if (type != "prihod" && type != "rashod")
+                {
+                    Console.WriteLine("Neispravan tip. Može biti 'prihod' ili 'rashod'.");
+                    Console.ReadKey();
+                    continue;
+                }
+                break;
+	        }
+            return type;
+            
+        }
+        static string GetCategory(string type)
+        {
+
+            List<string> income = new List<string>{"placa","honorar", "bonus", "penzija","nasljedstvo","povrat poreza","ostalo"};
+            List<string> expense = new List<string>{"hrana","stanarina", "zdravstvo", "obrazovanje","prijevoz","sport i rekreacija","zabava", "ostalo"};    
+
+            string category;
+            while (true)
+	        {
+                Console.Clear();
+                Console.WriteLine("Odabreite neko od ovih kategorija: ");
+                if (type == "prihod")
+	            {
+                    Console.Write(string.Join(", ", income));
+	            }
+                else
+                {
+                    Console.Write(string.Join(", ", expense));
+                }
+
+                Console.WriteLine("\nUnesite kategoriju:");
+                category = Console.ReadLine().ToLower();
+                if (type == "prihod" && !income.Contains(category) ||type == "rashod" && !expense.Contains(category))
+	            {
+                    Console.WriteLine("Neispravan unos kategorije.");
+                    Console.ReadKey();
+                    continue;
+	            }
+
+                break;
+	        }
+            return category;
+        }
+        static string GetDescription()
+        {  
+            Console.Clear();
+            Console.WriteLine("Unesite opis transakcije (ili pritisnite Enter za standardnu):");
+            string description = Console.ReadLine();
+            description = string.IsNullOrEmpty(description) ? "standardna transakcija" : description;   
+            return description;
+        }
+        static string GetDate()
+        {
+            string newDate;
+            while (true)
+            {
+                Console.Clear();
+                Console.Write("Unesite datum izvršene transakcije (yyyy-MM-dd HH:mm): ");
+
+                DateTime isCorrectDate;
+                if (!DateTime.TryParse(Console.ReadLine(), out isCorrectDate))
+                {
+                    Console.WriteLine("Nepravilan datuma transakcije molimo vas da unesete u obliku (yyyy-MM-dd HH:mm).");
+                    Console.ReadKey();
+                    continue;
+                }
+
+
+                newDate = isCorrectDate.ToString("yyyy/MM/dd HH:mm");
+                break;
+            }
+            return newDate;
+        }
+
+        //transactions
+        static void EnterPastTransaction(string userId,string accountType)
+        {
+            double amountDecimal = GetAmount();
+            string type = GetTypeOfTransaction();
+            string category = GetCategory(type);
+            string description = GetDescription();
+            string transactionDate = GetDate();
+
+            string transactionId = Guid.NewGuid().ToString();
+            var transaction = new Dictionary<string, string>
+            {
+                { "id", transactionId },
+                { "amount", amountDecimal.ToString("F2") },
+                { "type", type },
+                { "category", category },
+                { "description", description },
+                { "dateTime", transactionDate }
+            };
+
+            if (!transactions.ContainsKey(userId))
+	        {
+                transactions[userId] = new Dictionary<string, List<Dictionary<string, string>>>();
+	        }
+            if (!transactions[userId].ContainsKey(accountType))
+	        {
+                transactions[userId][accountType] = new List<Dictionary<string, string>>();
+	        }
+            transactions[userId][accountType].Add(transaction);
+
+            Console.WriteLine("Transakcija uspješno dodana");            
+            Console.WriteLine($"Trenutno imate {transactions[userId][accountType].Count} transakcija na ovom računu.");
+            Console.ReadKey();
+        }
+        static void EnterCurrentTransaction(string userId,string accountType)
+        {
+            double amountDecimal = GetAmount();
+            string type = GetTypeOfTransaction();
+            string category = GetCategory(type);
+            string description = GetDescription();
+            
+            
+            string transactionDate =DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            
+            
+            string transactionId = Guid.NewGuid().ToString();
+            var transaction = new Dictionary<string, string>
+            {
+                { "id", transactionId },
+                { "amount", amountDecimal.ToString("F2") },
+                { "type", type },
+                { "category", category },
+                { "description", description },
+                { "dateTime", transactionDate }
+            };
+
+            if (!transactions.ContainsKey(userId))
+	        {
+                transactions[userId] = new Dictionary<string, List<Dictionary<string, string>>>();
+	        }
+            if (!transactions[userId].ContainsKey(accountType))
+	        {
+                transactions[userId][accountType] = new List<Dictionary<string, string>>();
+	        }
+            transactions[userId][accountType].Add(transaction);
+
+            Console.WriteLine("Transakcija uspješno dodana");            
+            Console.WriteLine($"Trenutno imate {transactions[userId][accountType].Count} transakcija na ovom računu.");
+            Console.ReadKey();
+        }
+        static void ViewTransactions(string userId, string accountType)
+        {
+            // Provjera postoji li korisnik i accountType
+            if (transactions.ContainsKey(userId) && transactions[userId].ContainsKey(accountType))
+            {
+                Console.WriteLine($"Transakcije za korisnika ID: {userId}, račun: {accountType}:");       
+                var transactionList = transactions[userId][accountType];
+        
+                if (transactionList.Count == 0)
+                {
+                    Console.WriteLine("Nema transakcija za ovaj račun.");
+                }
+                else
+                {                   
+                    foreach (var transaction in transactionList)
+                    {
+                        
+                        Console.WriteLine($"Tip: {transaction["type"]}, Iznos: {transaction["amount"]}" +
+                                          $" Opis: {transaction["description"]}, Kategorija: {transaction["category"]}, Datum: {transaction["dateTime"]}");
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Nema transakcija za odabrani račun ovog korisnika.");
+            }
+            Console.ReadKey();
+        }
+        static void EnterTransactionMenu(string userId,string accountType)
         {
             bool exit = false;
             while (!exit)
@@ -393,10 +600,10 @@ namespace Domaci2
                 switch (enteredValue)
                 {
                     case "1":
-                        //EnterCurrentTransaction();
+                        EnterCurrentTransaction(userId,accountType);
                         break;
                     case "2":
-                        //EnterPastTransaction();
+                        EnterPastTransaction(userId, accountType);
                         break;
                     case "0":
                         exit = true;
@@ -426,7 +633,7 @@ namespace Domaci2
                 switch (enteredValue)
                 {
                     case "1":
-                        EnterTransactionMenu();
+                        EnterTransactionMenu(userId,accountType);
                         break;
                     case "2":
                         //DeleteTransactionMenu();
@@ -435,7 +642,7 @@ namespace Domaci2
                         //EditTransactionMenu();
                         break;
                     case "4":
-                        //ViewTransactionMenu();
+                        ViewTransactions(userId, accountType);
                         break;
                     case "5":
                         //FinancialReportMenu();
@@ -451,11 +658,11 @@ namespace Domaci2
             }
         }
 
-
-
         static List<Dictionary<string, string>> users = new List<Dictionary<string, string>>();
         static int lastUserId = 0;
         static Dictionary<string, Dictionary<string, double>> accounts = new Dictionary<string, Dictionary<string, double>>();
+        static Dictionary<string, Dictionary<string, List<Dictionary<string, string>>>> transactions = new Dictionary<string, Dictionary<string, List<Dictionary<string, string>>>>();
+
         static void Main(string[] args)
         {
             lastUserId++;
