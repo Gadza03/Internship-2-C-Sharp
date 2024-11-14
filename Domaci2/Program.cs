@@ -8,6 +8,67 @@ namespace Domaci2
 {
     class Program
     {
+        //create user to use program
+        static void AddTransactionToUser(string userId, string accountType, double amount,string type, string category, string description, string dateTime)
+        {
+            var transaction = new Dictionary<string, string>
+            {
+                { "id", Guid.NewGuid().ToString() },
+                { "amount", amount.ToString("F2") },
+                { "type", type },
+                { "category", category },
+                { "description", description },
+                { "dateTime", dateTime }
+            };
+             if (!transactions.ContainsKey(userId))
+	        {
+                transactions[userId] = new Dictionary<string, List<Dictionary<string, string>>>();
+	        }
+            if (!transactions[userId].ContainsKey(accountType))
+	        {
+                transactions[userId][accountType] = new List<Dictionary<string, string>>();
+	        }
+            transactions[userId][accountType].Add(transaction);
+
+            if (type == "prihod")               
+                accounts[userId][accountType] += amount;
+            else if (type == "rashod")        
+                accounts[userId][accountType] -= amount;
+
+        }
+        static void AddUsersAndAcconts(string name, string surname, string dateOfBirth)
+        {
+            lastUserId++;
+            var user = new Dictionary<string, string>()
+            {
+                {"id",lastUserId.ToString()},
+                {"ime", name},
+                {"prezime", surname},
+                {"datum_rodenja", dateOfBirth}
+
+            };
+            users.Add(user);
+
+            accounts[lastUserId.ToString()] = new Dictionary<string, double>
+            {
+                {"tekuci", 100.00 },
+                {"ziro", 0.00 },
+                {"prepaid", 0.00 }
+            };
+
+            AddTransactionToUser(lastUserId.ToString(), "tekuci", 23.55, "prihod","placa","Isplacena placa", DateTime.Now.ToString() );
+            AddTransactionToUser(lastUserId.ToString(), "ziro", 200.35, "prihod","honorar","Honorar za 11. mjesec", DateTime.Now.ToString() );
+            AddTransactionToUser(lastUserId.ToString(), "prepaid", 6.99, "rashod","hrana","Kupovina u FastFood-u", DateTime.Now.ToString() );
+
+           
+        }
+        static void UsersAccountsAndTransactions()
+        {
+            AddUsersAndAcconts("Mirko","Jerkovic","1997-12-03");
+            AddUsersAndAcconts("Slaven","Bilic","1977-05-22");
+            AddUsersAndAcconts("John","Cage","1988-01-12");
+            AddUsersAndAcconts("Jana","Milicic","2003-03-18");        
+        }
         // user part
         static string DateValidation()
         {
@@ -495,8 +556,15 @@ namespace Domaci2
             string category = GetCategory(type);
             string description = GetDescription();
             string transactionDate = GetDate();
-
             string transactionId = Guid.NewGuid().ToString();
+
+            Console.WriteLine("Stanje prije transakcije: " + accounts[userId][accountType].ToString());
+            if (type == "prihod")               
+                accounts[userId][accountType] += amountDecimal;
+            else if (type == "rashod")        
+                accounts[userId][accountType] -= amountDecimal;
+            Console.WriteLine("Stanje nakon transakcije: " + accounts[userId][accountType].ToString());
+
             var transaction = new Dictionary<string, string>
             {
                 { "id", transactionId },
@@ -506,6 +574,7 @@ namespace Domaci2
                 { "description", description },
                 { "dateTime", transactionDate }
             };
+            
 
             if (!transactions.ContainsKey(userId))
 	        {
@@ -517,8 +586,8 @@ namespace Domaci2
 	        }
             transactions[userId][accountType].Add(transaction);
 
-            Console.WriteLine("Transakcija uspješno dodana");            
-            Console.WriteLine($"Trenutno imate {transactions[userId][accountType].Count} transakcija na ovom računu.");
+            Console.WriteLine("Transakcija uspješno dodana");          
+            
             Console.ReadKey();
         }
         static void EnterCurrentTransaction(string userId,string accountType)
@@ -526,11 +595,15 @@ namespace Domaci2
             double amountDecimal = GetAmount();
             string type = GetTypeOfTransaction();
             string category = GetCategory(type);
-            string description = GetDescription();
-            
-            
+            string description = GetDescription();       
             string transactionDate =DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             
+            Console.WriteLine("Stanje prije transakcije: " + accounts[userId][accountType].ToString());
+            if (type == "prihod")               
+                accounts[userId][accountType] += amountDecimal;
+            else if (type == "rashod")        
+                accounts[userId][accountType] -= amountDecimal;
+            Console.WriteLine("Stanje nakon transakcije: " + accounts[userId][accountType].ToString());
             
             string transactionId = Guid.NewGuid().ToString();
             var transaction = new Dictionary<string, string>
@@ -553,8 +626,7 @@ namespace Domaci2
 	        }
             transactions[userId][accountType].Add(transaction);
 
-            Console.WriteLine("Transakcija uspješno dodana");            
-            Console.WriteLine($"Trenutno imate {transactions[userId][accountType].Count} transakcija na ovom računu.");
+            Console.WriteLine("Transakcija uspješno dodana");           
             Console.ReadKey();
         }
         static void ViewTransactions(string userId, string accountType)
@@ -665,39 +737,7 @@ namespace Domaci2
 
         static void Main(string[] args)
         {
-            lastUserId++;
-            Dictionary<string, string> user1 = new Dictionary<string, string>
-            {
-                {"id", lastUserId.ToString() },
-                {"ime", "Mirko"},
-                {"prezime", "Jerkovic" },
-                {"datum_rodenja", "1999/05/11" },
-
-            };
-
-            users.Add(user1);
-            lastUserId++;
-            accounts[lastUserId.ToString()] = new Dictionary<string, double>
-            {
-                {"tekuci", 100.00 },
-                {"ziro", 0.00 },
-                {"prepaid", 0.00 }
-            };
-            Dictionary<string, string> user2 = new Dictionary<string, string>
-            {
-                {"id", lastUserId.ToString() },
-                {"ime", "Slaven"},
-                {"prezime", "Bilic" },
-                {"datum_rodenja", "1970/05/17" }
-            };
-            users.Add(user2);
-
-            accounts[lastUserId.ToString()] = new Dictionary<string, double>
-            {
-                {"tekuci", 100.00 },
-                {"ziro", -20.00 },
-                {"prepaid", 0.00 }
-            };
+            UsersAccountsAndTransactions();
 
             bool closeApp = false;
             while (!closeApp)
