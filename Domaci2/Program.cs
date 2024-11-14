@@ -11,9 +11,10 @@ namespace Domaci2
         //create user to use program
         static void AddTransactionToUser(string userId, string accountType, double amount,string type, string category, string description, string dateTime)
         {
+            uniqueTransactionId++;
             var transaction = new Dictionary<string, string>
             {
-                { "id", Guid.NewGuid().ToString() },
+                { "id", uniqueTransactionId.ToString() },
                 { "amount", amount.ToString("F2") },
                 { "type", type },
                 { "category", category },
@@ -487,8 +488,7 @@ namespace Domaci2
         static string GetCategory(string type)
         {
 
-            List<string> income = new List<string>{"placa","honorar", "bonus", "penzija","nasljedstvo","povrat poreza","ostalo"};
-            List<string> expense = new List<string>{"hrana","stanarina", "zdravstvo", "obrazovanje","prijevoz","sport i rekreacija","zabava", "ostalo"};    
+            
 
             string category;
             while (true)
@@ -549,6 +549,203 @@ namespace Domaci2
         }
 
         //transactions
+        //delete transactions
+        static void DeleteTransactionMenu(string userId, string accountType)
+        {
+            bool exit = false;
+            while (!exit)
+            {
+                Console.Clear();
+                Console.WriteLine("1 - Brisanje transakcije po ID-u");
+                Console.WriteLine("2 - Brisanje transakcija ispod unesenog iznosa");
+                Console.WriteLine("3 - Brisanje transakcija iznad unesenog iznosa");
+                Console.WriteLine("4 - Brisanje svih prihoda");
+                Console.WriteLine("5 - Brisanje svih rashoda");
+                Console.WriteLine("6 - Brisanje svih transakcija za odabranu kategoriju");
+                Console.WriteLine("0 - Vrati se nazad");
+
+                string enteredValue = Console.ReadLine();
+
+                switch (enteredValue)
+                {
+                    case "1":
+                        
+                        DeleteTransactionById(userId, accountType);
+                        break;
+                    case "2":
+                        DeleteTransactionBasedOnAmount(userId, accountType, "ispod");
+                        break;
+                    case "3":
+                        DeleteTransactionBasedOnAmount(userId, accountType, "iznad");
+                        break;
+                    case "4":
+                        DeleteTransactionBasedOnType(userId, accountType, "prihod");
+                        break;
+                    case "5":
+                        DeleteTransactionBasedOnType(userId, accountType, "rashod");
+                        break;
+                    case "6":
+                        DeleteTransactionBasedOnCategory(userId, accountType);
+                        break;
+                    case "0":
+                        exit = true;
+                        break;
+                    default:
+                        Console.WriteLine("Nevažeći unos.\nMolimo vas da unesete ponovno.");
+                        Console.ReadKey();
+                        continue;
+                }
+            }
+
+        }
+        static void DeleteTransactionById(string userId, string accountType)
+        {
+            bool isValidId = false;
+            string enteredId;
+            Dictionary<string,string> transactionToDelete = null;
+            do
+	        {
+                Console.Clear();
+                Console.Write("Unesite ID transakcije koju želite obisat: ");
+                enteredId = Console.ReadLine();
+                transactionToDelete = transactions[userId][accountType].FirstOrDefault(t => t["id"] == enteredId);
+                if (transactionToDelete == null)
+	            {
+                    Console.WriteLine("Uneseni ID ne postoji! Pokusajte ponovno.");
+                    Console.ReadKey();
+                    continue;
+	            }
+                isValidId = true;
+	        } while (!isValidId);
+
+            transactions[userId][accountType].Remove(transactionToDelete);
+            Console.WriteLine($"Ispravan unos ID-a transakcije {enteredId}.\n Uspješno obrisana transakcija.");
+            Console.ReadKey();
+        }
+        static void DeleteTransactionBasedOnAmount(string userId, string accountType, string condition)
+        {
+            bool isValidId = false;
+            double amount;            
+            do
+	        {
+                Console.Clear();
+                Console.Write($"Unesite {condition} koje vrijednosti zelite brisati: ");
+                string amountInput = Console.ReadLine();
+                if (!double.TryParse(amountInput, out amount))
+	            {
+                    Console.WriteLine("Nepravilan unos broja. Ponvno pokusajte.");
+                    Console.ReadKey();
+                    continue;
+	            }
+                
+                isValidId = true;
+	        } while (!isValidId);
+            //amount je ali treba pretvorit u double u transakcijama "amount", amount.tosting("f2")
+            var accountTransactions = transactions[userId][accountType];
+            List<Dictionary<string,string>> transactionsToRemove = new List<Dictionary<string, string>>();
+
+            foreach (var transaction in accountTransactions)
+	        {
+                double transactionAmount = double.Parse(transaction["amount"]);
+                if (condition == "iznad" && transactionAmount > amount)
+	            {
+                    transactionsToRemove.Add(transaction);
+	            }
+                else if (condition == "ispod" && transactionAmount < amount)
+                {
+                    transactionsToRemove.Add(transaction);
+                }
+	        }
+            if (transactionsToRemove.Count != 0)
+	        {
+                foreach (var transaction in transactionsToRemove)
+	            {
+                    accountTransactions.Remove(transaction);
+	            }
+                Console.WriteLine($"Uspjesno ste obrisali transakcije koje su {condition} unesene vrijednosti.");     
+                Console.ReadKey();
+	        }
+            else
+            {
+                Console.WriteLine($"Korisnik nema transakcija koje su {condition} unesene vrijednosti.");
+                Console.ReadKey();
+            }
+            
+        }
+      
+        static void DeleteTransactionBasedOnType(string userId, string accountType, string type)
+        {
+            List<Dictionary<string,string>> transactionsToDelete = new List<Dictionary<string, string>>();
+            var accountTransactions = transactions[userId][accountType];
+            foreach (var transaction in accountTransactions)
+	        {
+                if (type == "prihod" && transaction["type"] == type)
+	            {
+                    transactionsToDelete.Add(transaction);
+	            }
+                else if (type == "rashod" && transaction["type"] == type)
+                {
+                    transactionsToDelete.Add(transaction);
+                }
+	        }
+            if (transactionsToDelete.Count != 0)
+	        {
+                foreach (var transaction in transactionsToDelete)
+	            {
+                    accountTransactions.Remove(transaction);
+	            }
+                Console.WriteLine($"Uspjesno ste obrisali transakcije koje su {type}.");     
+                Console.ReadKey();
+	        }
+            else
+            {
+                Console.WriteLine($"Korisnik nema transakcija koje su {type}.");
+                Console.ReadKey();
+            }
+        }
+        static void DeleteTransactionBasedOnCategory(string userId, string accountType)
+        {
+            var accountTransactions = transactions[userId][accountType];
+            bool isValidCategory = false;
+            string enteredCat;
+            do
+	        {
+                Console.Clear();
+                Console.Write("Unesite kategoriju za koju zelite izbrisati transakcije: ");
+                enteredCat = Console.ReadLine();
+                if (!income.Contains(enteredCat) && !expense.Contains(enteredCat))
+	            {
+                    Console.WriteLine("Unesena kategorija ne postoji. Pokusajte ponovno.");
+                    Console.ReadKey();
+                    continue;
+	            }
+                isValidCategory = true;
+	        } while (!isValidCategory);
+
+            List<Dictionary<string,string>> transactionsToDelete = new List<Dictionary<string, string>>();
+            foreach (var transaction in accountTransactions)
+	        {
+                if (transaction["category"] == enteredCat)	            
+                    transactionsToDelete.Add(transaction);	            
+	        }
+            if (transactionsToDelete.Count != 0)
+	        {
+                foreach (var transaction in transactionsToDelete)
+	            {
+                    accountTransactions.Remove(transaction);
+	            }
+                Console.WriteLine($"Uspjesno su obrisane sve transakcije categotije ({enteredCat})");
+                Console.ReadKey();
+	        }
+            else
+            {
+                Console.WriteLine($"Za unesenu kategoriju korisnik nema transakcije.");
+                Console.ReadKey();
+            }
+            
+            
+        }
+        //enter transactions
         static void EnterPastTransaction(string userId,string accountType)
         {
             double amountDecimal = GetAmount();
@@ -556,7 +753,8 @@ namespace Domaci2
             string category = GetCategory(type);
             string description = GetDescription();
             string transactionDate = GetDate();
-            string transactionId = Guid.NewGuid().ToString();
+            uniqueTransactionId++;
+            string transactionId = uniqueTransactionId.ToString();
 
             Console.WriteLine("Stanje prije transakcije: " + accounts[userId][accountType].ToString());
             if (type == "prihod")               
@@ -564,7 +762,7 @@ namespace Domaci2
             else if (type == "rashod")        
                 accounts[userId][accountType] -= amountDecimal;
             Console.WriteLine("Stanje nakon transakcije: " + accounts[userId][accountType].ToString());
-
+            
             var transaction = new Dictionary<string, string>
             {
                 { "id", transactionId },
@@ -604,8 +802,8 @@ namespace Domaci2
             else if (type == "rashod")        
                 accounts[userId][accountType] -= amountDecimal;
             Console.WriteLine("Stanje nakon transakcije: " + accounts[userId][accountType].ToString());
-            
-            string transactionId = Guid.NewGuid().ToString();
+            uniqueTransactionId++;
+            string transactionId = uniqueTransactionId.ToString();
             var transaction = new Dictionary<string, string>
             {
                 { "id", transactionId },
@@ -629,6 +827,7 @@ namespace Domaci2
             Console.WriteLine("Transakcija uspješno dodana");           
             Console.ReadKey();
         }
+        //print transactions
         static void ViewTransactions(string userId, string accountType)
         {
             // Provjera postoji li korisnik i accountType
@@ -646,7 +845,7 @@ namespace Domaci2
                     foreach (var transaction in transactionList)
                     {
                         
-                        Console.WriteLine($"Tip: {transaction["type"]}, Iznos: {transaction["amount"]}" +
+                        Console.WriteLine($"Id: {transaction["id"]} - Tip: {transaction["type"]}, Iznos: {transaction["amount"]}" +
                                           $" Opis: {transaction["description"]}, Kategorija: {transaction["category"]}, Datum: {transaction["dateTime"]}");
                     }
                 }
@@ -708,7 +907,7 @@ namespace Domaci2
                         EnterTransactionMenu(userId,accountType);
                         break;
                     case "2":
-                        //DeleteTransactionMenu();
+                        DeleteTransactionMenu(userId,accountType);
                         break;
                     case "3":
                         //EditTransactionMenu();
@@ -730,8 +929,11 @@ namespace Domaci2
             }
         }
 
+        static List<string> income = new List<string>{"placa","honorar", "bonus", "penzija","nasljedstvo","povrat poreza","ostalo"};
+        static List<string> expense = new List<string>{"hrana","stanarina", "zdravstvo", "obrazovanje","prijevoz","sport i rekreacija","zabava", "ostalo"};    
         static List<Dictionary<string, string>> users = new List<Dictionary<string, string>>();
         static int lastUserId = 0;
+        static int uniqueTransactionId = 0;
         static Dictionary<string, Dictionary<string, double>> accounts = new Dictionary<string, Dictionary<string, double>>();
         static Dictionary<string, Dictionary<string, List<Dictionary<string, string>>>> transactions = new Dictionary<string, Dictionary<string, List<Dictionary<string, string>>>>();
 
