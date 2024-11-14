@@ -547,8 +547,42 @@ namespace Domaci2
             }
             return newDate;
         }
+        //edit transactions
+        static void EditTransaction(string userId, string accountType)
+        {
+            var accountTransactions = transactions[userId][accountType];           
+            bool isValidId = false;
+            string enteredId;
+            do
+	        {
+                Console.Clear();
+                Console.Write("Unesite ID transakcije koju zelite urediti: ");
+                enteredId = Console.ReadLine();
+                isValidId = accountTransactions.Any(transaction => transaction["id"] == enteredId);              
+                
+                if (!isValidId)
+	            {
+                    
+                    Console.WriteLine("Uneseni ID transakcije ne postoji. Pokusajte ponovno.");
+                    Console.ReadKey();
+                    continue;
+	            }                         
+	        } while (!isValidId);
 
-        //transactions
+            double amountDecimal = GetAmount();
+            string type = GetTypeOfTransaction();
+            string category = GetCategory(type);
+            string description = GetDescription();
+            string transactionDate = GetDate();
+            Dictionary<string,string> foundTransaction = accountTransactions.FirstOrDefault(transaction => transaction["id"] == enteredId);
+            foundTransaction["amount"] = amountDecimal.ToString("F2"); 
+            foundTransaction["type"] = type;
+            foundTransaction["category"] = category;
+            foundTransaction["description"] = description;
+            foundTransaction["dateTime"] = transactionDate;
+            Console.WriteLine("Uspjesno ste uredili transakciju sa ID-om "+enteredId);
+            Console.ReadKey();
+        }
         //delete transactions
         static void DeleteTransactionMenu(string userId, string accountType)
         {
@@ -671,8 +705,7 @@ namespace Domaci2
                 Console.ReadKey();
             }
             
-        }
-      
+        }     
         static void DeleteTransactionBasedOnType(string userId, string accountType, string type)
         {
             List<Dictionary<string,string>> transactionsToDelete = new List<Dictionary<string, string>>();
@@ -910,7 +943,7 @@ namespace Domaci2
                         DeleteTransactionMenu(userId,accountType);
                         break;
                     case "3":
-                        //EditTransactionMenu();
+                        EditTransaction(userId,accountType);
                         break;
                     case "4":
                         ViewTransactions(userId, accountType);
