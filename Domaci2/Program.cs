@@ -391,35 +391,29 @@ namespace Domaci2
                 }
         static void UserValidation()
         {
-            bool isFounded = false;
-            string userId = null; // Dodajte inicijalizaciju za userId
-            do
-            {
+            string name;
+            string surname;
+            string userId;
+            while (true)
+	        {
                 Console.Clear();
-                Console.Write("Unesite ime i prezime: ");
-                var nameAndSurname = Console.ReadLine().Trim().ToLower().Split();
-                if (nameAndSurname.Length < 2)
+                Console.Write("Unesite ime: ");
+                name = Console.ReadLine().Trim().ToLower(); 
+                Console.Write("Unesite prezime: ");
+                surname = Console.ReadLine().Trim().ToLower(); 
+                var foundUser = users.FirstOrDefault(t => t["ime"].ToLower() == name &&  t["prezime"].ToLower() == surname);
+                if(foundUser != null)
                 {
-                    Console.WriteLine("Unesite puno ime i prezime");
-                    Console.ReadKey();
-                    continue;
-                }
-                var foundUser = users.FirstOrDefault(user => user["ime"].ToLower() == nameAndSurname[0]
-                                                             && user["prezime"].ToLower() == nameAndSurname[1]);
-
-                if (foundUser != null)
-                {
-                    userId = foundUser["id"]; 
-                    isFounded = true;
+                    userId = foundUser["id"];
+                    break;
                 }
                 else
                 {
-                    Console.WriteLine("Korisnik nije pronađen. Pokušajte ponovno.");
+                    Console.WriteLine($"Korisnik imena {name} {surname} nije pronađen. Pokusajte ponovno.");
                     Console.ReadKey();
+                    continue;
                 }
-
-            } while (!isFounded);
-            
+	        }
             ChooseAccount(userId);
         }
         static void ChooseAccount(string userId)
