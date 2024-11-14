@@ -57,9 +57,23 @@ namespace Domaci2
                 {"prepaid", 0.00 }
             };
 
-            AddTransactionToUser(lastUserId.ToString(), "tekuci", 23.55, "prihod","placa","Isplacena placa", DateTime.Now.ToString() );
-            AddTransactionToUser(lastUserId.ToString(), "ziro", 200.35, "prihod","honorar","Honorar za 11. mjesec", DateTime.Now.ToString() );
-            AddTransactionToUser(lastUserId.ToString(), "prepaid", 6.99, "rashod","hrana","Kupovina u FastFood-u", DateTime.Now.ToString() );
+            AddTransactionToUser(lastUserId.ToString(), "tekuci", 23.55, "prihod","placa","Isplacena placa", "2024/07/31 08:30" );
+            AddTransactionToUser(lastUserId.ToString(), "tekuci", 1500.00, "prihod", "placa", "Mjesecna plata za listopad", "2024/10/31 08:30");
+            AddTransactionToUser(lastUserId.ToString(), "tekuci", 550.00, "rashod", "stanarina", "Stanarina za studeni", "2024/11/01 10:00");
+            AddTransactionToUser(lastUserId.ToString(), "tekuci", 25.50, "rashod", "hrana", "Kupovina namirnica", "2024/06/15 09:30");
+            AddTransactionToUser(lastUserId.ToString(), "tekuci", 15.50, "rashod", "hrana", "Kupovina mesa", "2024/06/10 12:30");
+            AddTransactionToUser(lastUserId.ToString(), "tekuci", 60.00, "rashod", "sport i rekreacija", "Članarina za teretanu", "2024/04/10 18:30");
+
+            AddTransactionToUser(lastUserId.ToString(), "ziro", 200.35, "prihod","honorar","Honorar za 11. mjesec", "2023/10/31 18:30" );
+            AddTransactionToUser(lastUserId.ToString(), "ziro", 300.00, "prihod", "bonus", "Godisnji bonus", "2024/09/15 14:45");
+            AddTransactionToUser(lastUserId.ToString(), "ziro", 20.00, "rashod", "zabava", "Ulaznice za koncert", "2024/09/05 19:30");
+            AddTransactionToUser(lastUserId.ToString(), "ziro", 5000.00, "prihod", "nasljedstvo", "Nasljedstvo od bake", "2024/05/20 16:00");
+
+            AddTransactionToUser(lastUserId.ToString(), "prepaid", 6.99, "rashod","hrana","Kupovina u FastFood-u", "2024/10/08 15:30" );
+            AddTransactionToUser(lastUserId.ToString(), "prepaid", 45.00, "rashod", "prijevoz", "Trosak goriva", "2024/08/20 17:00");
+            AddTransactionToUser(lastUserId.ToString(), "prepaid", 120.00, "prihod", "povrat poreza", "Povrat poreza za 2023. godinu", "2024/07/01 12:00");
+            AddTransactionToUser(lastUserId.ToString(), "prepaid", 700.00, "prihod", "penzija", "Mjesečna penzija", "2024/03/25 08:45");
+
 
            
         }
@@ -353,7 +367,7 @@ namespace Domaci2
             }
         }
 
-        //account part
+        //account part -userId -accountType
         static void AccountInDeficit()
                 {
                     bool isInMinus = false;
@@ -584,7 +598,241 @@ namespace Domaci2
 
 
         }
+        //view transactions
+        static void ViewTransactionsByTypeAndCategory(string userId, string accountType)
+        {
+            string type = GetTypeOfTransaction();
+            string category = GetCategory(type);
+            Console.Clear();
+            var transactionList = transactions[userId][accountType];
+            var transactionsTypeAndCat = transactionList.Where(t => t["category"] == category && t["type"] == type).ToList();
+            if (transactionsTypeAndCat.Count == 0)
+                Console.WriteLine("Korisnik nema transakcija sa ovom kategorijom.");
+            else       
+                PrintTransactions(transactionsTypeAndCat);
+
+            Console.ReadKey();
+
+        }
+        static void ViewTransactionsByCategory(string userId, string accountType)
+        {
+            var transactionList = transactions[userId][accountType];
+            bool isValidCategory = false;
+            string enteredCat;
+            do
+	        {
+                Console.Clear();
+                Console.Write("Unesite kategoriju koju zelite prikazati: ");
+                enteredCat = Console.ReadLine().ToLower();
+                if (!income.Contains(enteredCat) && !expense.Contains(enteredCat))
+	            {
+                    Console.WriteLine("Unesena kategorija ne postoji. Pokusajte ponovno.");
+                    Console.ReadKey();
+                    continue;
+	            }
+                isValidCategory = true;
+	        } while (!isValidCategory);
+
+            var transactionsWithCategory = transactionList.Where(t => t["category"] == enteredCat).ToList();
+            if (transactionsWithCategory.Count == 0)
+                Console.WriteLine("Korisnik nema transakcija sa ovom kategorijom.");
+            else       
+                PrintTransactions(transactionsWithCategory);
+
+            Console.ReadKey();
+            
+        }
+        static void ViewTransactionByType(string userId, string accountType, string type)
+        {
+            Console.Clear();
+            Console.WriteLine($"Ispis svih transakcija tipa '{type}' -->\n");
+            var transactionList = transactions[userId][accountType];
+            
+            if (transactionList.Count == 0)          
+                Console.WriteLine("Nema transakcija za ovaj račun.");       
+            else
+            {                   
+                if (type == "prihod")
+	            {
+                    var incomeTransactions = transactionList.Where(transaction => transaction["type"] == type).ToList();
+                    PrintTransactions(incomeTransactions);
+
+	            }
+                else if (type == "rashod")
+	            {
+                    var expenseTransactions = transactionList.Where(transaction => transaction["type"] == type).ToList();                  
+                    PrintTransactions(expenseTransactions);
+                }    
+            }
+            Console.ReadKey();
         
+        }
+        static void ViewTransactionsSortedByDate(string userId, string accountType, string type)
+        {
+            Console.Clear();
+            Console.WriteLine($"Ispis svih transakcija po datumu {type} -->\n");
+            var transactionList = transactions[userId][accountType];
+            
+            if (transactionList.Count == 0)
+            {
+                Console.WriteLine("Nema transakcija za ovaj račun.");
+                
+            }
+            
+            else
+            {                   
+                if (type == "uzlazno")
+	            {
+                    var sortedTransactionsAscending = transactionList.OrderBy(t => DateTime.Parse(t["dateTime"])).ToList();
+                    PrintTransactions(sortedTransactionsAscending);
+	            }
+                else if (type == "silazno")
+	            {
+                    var sortedTransactionsDescending = transactionList.OrderByDescending(t => DateTime.Parse(t["dateTime"])).ToList();	
+                    PrintTransactions(sortedTransactionsDescending);
+                }
+                
+
+            }
+            Console.ReadKey();
+        }
+        static void ViewTransactionsSortedByDescription(string userId, string accountType)
+        {
+            Console.Clear();
+            Console.WriteLine($"Ispis svih transakcija sortirano po opisu -->\n");
+            var transactionList = transactions[userId][accountType];
+            
+            if (transactionList.Count == 0)
+            {
+                Console.WriteLine("Nema transakcija za ovaj račun.");
+                
+            }
+            else
+            {
+                var sortedByDescriptionList = transactionList.OrderBy(t => t["description"]).ToList();
+                PrintTransactions(sortedByDescriptionList);
+            }
+            Console.ReadKey();
+        }
+        static void ViewTransactionsSortedByAmount(string userId, string accountType, string type)
+        {
+            Console.Clear();
+            Console.WriteLine($"Ispis svih transakcija po vrijednosti {type} -->\n");
+            var transactionList = transactions[userId][accountType];
+            
+            if (transactionList.Count == 0)
+            {
+                Console.WriteLine("Nema transakcija za ovaj račun.");
+                
+            }
+            
+            else
+            {                   
+                if (type == "uzlazno")
+	            {
+                    var sortedTransactionsAscending = transactionList.OrderBy(t => double.Parse(t["amount"])).ToList();
+                    PrintTransactions(sortedTransactionsAscending);
+	            }
+                else if (type == "silazno")
+	            {
+                    var sortedTransactionsDescending = transactionList.OrderByDescending(t => double.Parse(t["amount"])).ToList();	
+                    PrintTransactions(sortedTransactionsDescending);
+                }
+                
+
+            }
+            Console.ReadKey();
+        }
+        static void ViewAllTransactions(string userId, string accountType)
+        {
+            Console.Clear();
+            Console.WriteLine($"Ispis svih transakcija za račun: {accountType}:\n");       
+            var transactionList = transactions[userId][accountType];
+        
+            if (transactionList.Count == 0)
+            {
+                Console.WriteLine("Nema transakcija za ovaj račun.");
+            }
+            else
+            {                   
+                PrintTransactions(transactionList);
+            }
+            
+            Console.ReadKey();
+        }
+        static void PrintTransactions(List<Dictionary<string, string>> transactionList)
+        {
+            foreach (var transaction in transactionList)
+                    {
+                        
+                        Console.WriteLine($"Tip - {transaction["type"]}, Iznos - {transaction["amount"]}$" +
+                                          $" Opis - {transaction["description"]}, Kategorija - {transaction["category"]}, Datum - {transaction["dateTime"]}");
+                    }
+        }
+        static void ViewTransactionsMenu(string userId, string accountType)
+        {
+            bool exit = false;
+            while (!exit)
+            {
+                Console.Clear();
+                Console.WriteLine("Pregled transakcija");
+                Console.WriteLine("1 - Sve transakcije kako su spremljene");
+                Console.WriteLine("2 - Sve transakcije sortirane po iznosu uzlazno");
+                Console.WriteLine("3 - Sve transakcije sortirane po iznosu silazno");
+                Console.WriteLine("4 - Sve transakcije sortirane po opisu abecedno");
+                Console.WriteLine("5 - Sve transakcije sortirane po datumu uzlazno");
+                Console.WriteLine("6 - Sve transakcije sortirane po datumu silazno");
+                Console.WriteLine("7 - Svi prihodi");
+                Console.WriteLine("8 - Svi rashodi");
+                Console.WriteLine("9 - Sve transakcije za odabranu kategoriju");
+                Console.WriteLine("10 - Sve transakcije za odabrani tip i kategoriju");
+                Console.WriteLine("0 - Vrati se nazad");
+
+                string enteredValue = Console.ReadLine();
+
+                switch (enteredValue)
+                {
+                    case "1":
+                        ViewAllTransactions(userId, accountType);
+                        break;
+                    case "2":
+                        ViewTransactionsSortedByAmount(userId, accountType, "uzlazno");
+                        break;
+                    case "3":
+                        ViewTransactionsSortedByAmount(userId, accountType, "silazno");
+                        break;
+                    case "4":
+                        ViewTransactionsSortedByDescription(userId, accountType);
+                        break;
+                    case "5":
+                        ViewTransactionsSortedByDate(userId,accountType,"uzlazno");
+                        break;
+                    case "6":
+                        ViewTransactionsSortedByDate(userId,accountType,"silazno");
+                        break;
+                    case "7":
+                        ViewTransactionByType(userId, accountType, "prihod");
+                        break;
+                    case "8":
+                        ViewTransactionByType(userId, accountType, "rashod");
+                        break;
+                    case "9":
+                        ViewTransactionsByCategory(userId, accountType);
+                        break;
+                    case "10":
+                        ViewTransactionsByTypeAndCategory(userId, accountType);
+                        break;
+                    case "0":
+                        exit = true;
+                        break;
+                    default:
+                        Console.WriteLine("Nevažeći unos.\nMolimo vas da unesete ponovno.");
+                        Console.ReadKey();
+                        continue;
+                }
+            }
+        }
+
         //edit transactions
         static void EditTransaction(string userId, string accountType)
         {
@@ -814,7 +1062,7 @@ namespace Domaci2
 	        {
                 Console.Clear();
                 Console.Write("Unesite kategoriju za koju zelite izbrisati transakcije: ");
-                enteredCat = Console.ReadLine();
+                enteredCat = Console.ReadLine().ToLower();
                 if (!income.Contains(enteredCat) && !expense.Contains(enteredCat))
 	            {
                     Console.WriteLine("Unesena kategorija ne postoji. Pokusajte ponovno.");
@@ -936,34 +1184,7 @@ namespace Domaci2
             Console.ReadKey();
         }
         //print transactions
-        static void ViewTransactions(string userId, string accountType)
-        {
-            // Provjera postoji li korisnik i accountType
-            if (transactions.ContainsKey(userId) && transactions[userId].ContainsKey(accountType))
-            {
-                Console.WriteLine($"Transakcije za korisnika ID: {userId}, račun: {accountType}:");       
-                var transactionList = transactions[userId][accountType];
         
-                if (transactionList.Count == 0)
-                {
-                    Console.WriteLine("Nema transakcija za ovaj račun.");
-                }
-                else
-                {                   
-                    foreach (var transaction in transactionList)
-                    {
-                        
-                        Console.WriteLine($"Id: {transaction["id"]} - Tip: {transaction["type"]}, Iznos: {transaction["amount"]}" +
-                                          $" Opis: {transaction["description"]}, Kategorija: {transaction["category"]}, Datum: {transaction["dateTime"]}");
-                    }
-                }
-            }
-            else
-            {
-                Console.WriteLine("Nema transakcija za odabrani račun ovog korisnika.");
-            }
-            Console.ReadKey();
-        }
         static void EnterTransactionMenu(string userId,string accountType)
         {
             bool exit = false;
@@ -1021,7 +1242,7 @@ namespace Domaci2
                         EditTransaction(userId,accountType);
                         break;
                     case "4":
-                        ViewTransactions(userId, accountType);
+                        ViewTransactionsMenu(userId, accountType);
                         break;
                     case "5":
                         //FinancialReportMenu();
