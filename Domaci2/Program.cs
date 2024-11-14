@@ -226,8 +226,11 @@ namespace Domaci2
             do
             {
                 Console.Clear();
-                Console.Write("Unesite ID koji zelite urediti - ");
+                Console.Write("Unesite ID koji zelite urediti (Enter - korak nazad) - ");
                 string enteredId = Console.ReadLine();
+                if (enteredId == "")
+                    return;
+
                 foreach (var user in users)
                 {
                     if (user["id"] == enteredId)
@@ -391,6 +394,7 @@ namespace Domaci2
                 }
         static void UserValidation()
         {
+            /*
             string name;
             string surname;
             string userId;
@@ -413,8 +417,8 @@ namespace Domaci2
                     Console.ReadKey();
                     continue;
                 }
-	        }
-            ChooseAccount(userId);
+	        }*/
+            ChooseAccount("1");
         }
         static void ChooseAccount(string userId)
         {
@@ -555,7 +559,7 @@ namespace Domaci2
             }
             return newDate;
         }
-        //confirmation --> sljedece za napravit kod edita i kod delete
+        //confirmation 
         static bool ConfirmationDialog(string message)
         {
             bool isValid = false;
@@ -591,6 +595,130 @@ namespace Domaci2
             return true;
 
 
+        }
+        //display financials
+        static double SumAmountsOfTransactions(List<Dictionary<string,string>> transactionList)
+        {
+            double sum = 0;
+            foreach (var transaction in transactionList)
+	        {
+                sum += double.Parse(transaction["amount"]);
+	        }
+            return sum;
+        }
+        static void DisplayTotalIncomeExpenseByMonthYear(string userId, string accountType)
+        {
+            Console.Clear();
+            var transactionList = transactions[userId][accountType];
+            
+            DateTime isCorrectDate;
+            bool isValid = false;
+    
+            // Petlja dok korisnik ne unese ispravan format
+            do
+            {
+                Console.Clear();
+                Console.Write("Unesite godinu i mjesec u formatu yyyy/MM: ");
+                
+                if (!DateTime.TryParse(Console.ReadLine(), out isCorrectDate))
+                {
+                    Console.WriteLine("Nepravilan unos datuma rođenja molimo vas da unesete u obliku (YYYY/MM).");
+                    Console.ReadKey();
+                    continue;
+                }
+                isValid = true;
+        
+            } while (!isValid);
+            var enteredDate = isCorrectDate;
+         
+            var transactionListIncome = transactionList.Where(t => 
+            {
+                var dateTime = DateTime.Parse(t["dateTime"]);
+                return dateTime.Year == enteredDate.Year && dateTime.Month == enteredDate.Month && t["type"] == "prihod";
+            }).ToList();
+
+            var transactionListExpense = transactionList.Where(t => 
+            {
+                var dateTime = DateTime.Parse(t["dateTime"]);
+                return dateTime.Year == enteredDate.Year && dateTime.Month == enteredDate.Month && t["type"] == "rashod";
+            }).ToList();           
+
+            if (transactionListIncome.Count == 0 && transactionListExpense.Count == 0)
+                Console.WriteLine($"Nema zabilježenjih transakcija u {enteredDate.Month}. mjesec {enteredDate.Year} godine.");
+            else
+            {
+                double incomeSum = SumAmountsOfTransactions(transactionListIncome);
+                double expenseSum = SumAmountsOfTransactions(transactionListExpense);
+                Console.Clear();
+                Console.WriteLine($"Ukupan iznos prihoda i rashoda za {enteredDate.Month}. mjesec {enteredDate.Year} godine -");
+                Console.WriteLine($"Prihodi - {incomeSum.ToString()}$");
+                Console.WriteLine($"Rashodi - {expenseSum.ToString()}$");
+            }          
+            Console.ReadKey();
+
+        }
+        static void DisplayTotalTransactionCount(string userId, string accountType)
+        {
+            Console.Clear();
+            var totalTransactions = transactions[userId][accountType].Count;
+            Console.WriteLine($"Broj ukupnih transakcija - {totalTransactions}");
+            Console.ReadKey();
+        }
+        static void DisplayAccountBalance(string userId, string accountType)
+        {
+            Console.Clear();
+            var balance = accounts[userId][accountType];
+            Console.WriteLine($"Trenutno stanje {accountType} računa - {balance}$");
+            if (balance < 0)
+                Console.WriteLine("Vaš trenutni saldo je negativan. Molimo poduzmite potrebne akcije.");
+            Console.ReadKey();
+        }
+        static void FinancialReportMenu(string userId, string accountType)
+        {
+            bool exit = false;
+            while (!exit)
+            {
+                Console.Clear();
+                Console.WriteLine("Financijsko izvješće:");
+                Console.WriteLine("1 - Trenutno stanje računa (ukupni zbroj prihoda i rashoda)");
+                Console.WriteLine("2 - Broj ukupnih transakcija");
+                Console.WriteLine("3 - Ukupan iznos prihoda i rashoda za odabrani mjesec i godinu");
+                Console.WriteLine("4 - Postotak udjela rashoda za odabranu kategoriju");
+                Console.WriteLine("5 - Prosječni iznos transakcije za odabrani mjesec i godinu");
+                Console.WriteLine("6 - Prosječni iznos transakcije za odabranu kategoriju");
+                Console.WriteLine("0 - Vrati se nazad");
+
+                string enteredValue = Console.ReadLine();
+
+                switch (enteredValue)
+                {
+                    case "1":
+                        DisplayAccountBalance(userId, accountType);
+                        break;
+                    case "2":
+                        DisplayTotalTransactionCount(userId, accountType);
+                        break;
+                    case "3":
+                        DisplayTotalIncomeExpenseByMonthYear(userId, accountType);
+                        break;
+                    case "4":
+                        //DisplayExpensePercentageForCategory(userId, accountType);
+                        break;
+                    case "5":
+                        //DisplayAverageTransactionByMonthYear(userId, accountType);
+                        break;
+                    case "6":
+                        //DisplayAverageTransactionByCategory(userId, accountType);
+                        break;
+                    case "0":
+                        exit = true;
+                        break;
+                    default:
+                        Console.WriteLine("Nevažeći unos.\nMolimo vas da unesete ponovno.");
+                        Console.ReadKey();
+                        continue;
+                }
+            }
         }
         //view transactions
         static void ViewTransactionsByTypeAndCategory(string userId, string accountType)
@@ -826,7 +954,6 @@ namespace Domaci2
                 }
             }
         }
-
         //edit transactions
         static void EditTransaction(string userId, string accountType)
         {
@@ -836,8 +963,10 @@ namespace Domaci2
             do
 	        {
                 Console.Clear();
-                Console.Write("Unesite ID transakcije koju zelite urediti: ");
+                Console.Write("Unesite ID transakcije koju zelite urediti (Enter - korak nazad): ");
                 enteredId = Console.ReadLine();
+                if (enteredId == "")
+                    return;
                 isValidId = accountTransactions.Any(transaction => transaction["id"] == enteredId);              
                 
                 if (!isValidId)
@@ -1239,7 +1368,7 @@ namespace Domaci2
                         ViewTransactionsMenu(userId, accountType);
                         break;
                     case "5":
-                        //FinancialReportMenu();
+                        FinancialReportMenu(userId, accountType);
                         break;
                     case "0":
                         exit = true;
