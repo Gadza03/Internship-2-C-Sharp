@@ -547,6 +547,44 @@ namespace Domaci2
             }
             return newDate;
         }
+        //confirmation --> sljedece za napravit kod edita i kod delete
+        static bool ConfirmationDialog(string message)
+        {
+            bool isValid = false;
+            do
+	        {
+                Console.Clear();
+                Console.Write($"Želite li zaista {message} ovu transakciju (Da/Ne): ");
+                string enteredChoice = Console.ReadLine().ToLower();
+                if (enteredChoice == "da")
+                {
+                    isValid = true;
+                    return true;
+                }   
+                    
+                else if(enteredChoice == "ne")
+                {
+                    Console.WriteLine("odgovor je ne i treeba returnati false");
+                    Console.ReadKey();
+                    isValid = true;
+                    return false;
+                }
+                    
+                else
+                {
+                    Console.WriteLine("Neispravan unos. Unesite 'Da' ili 'Ne'.");
+                    Console.ReadKey();
+                    continue;
+                }
+	            
+	            
+	        } while (!isValid);
+            
+            return true;
+
+
+        }
+        
         //edit transactions
         static void EditTransaction(string userId, string accountType)
         {
@@ -568,12 +606,20 @@ namespace Domaci2
                     continue;
 	            }                         
 	        } while (!isValidId);
-
+            
             double amountDecimal = GetAmount();
             string type = GetTypeOfTransaction();
             string category = GetCategory(type);
             string description = GetDescription();
             string transactionDate = GetDate();
+            bool confirmation = ConfirmationDialog("urediti");
+            if (!confirmation)
+	        {
+                Console.WriteLine("Prekinuli ste proces uređivanja. Ne spremamo promjene.");
+                Console.ReadKey();
+                return;
+	        }
+
             Dictionary<string,string> foundTransaction = accountTransactions.FirstOrDefault(transaction => transaction["id"] == enteredId);
             foundTransaction["amount"] = amountDecimal.ToString("F2"); 
             foundTransaction["type"] = type;
@@ -651,7 +697,15 @@ namespace Domaci2
 	            }
                 isValidId = true;
 	        } while (!isValidId);
-
+            
+           
+            bool confirmation = ConfirmationDialog("brisati");
+            if (!confirmation)
+	        {
+                Console.WriteLine("Prekinuli ste proces brisanja. Transakcija se ne briše.");
+                Console.ReadKey();
+                return;
+	        }
             transactions[userId][accountType].Remove(transactionToDelete);
             Console.WriteLine($"Ispravan unos ID-a transakcije {enteredId}.\n Uspješno obrisana transakcija.");
             Console.ReadKey();
@@ -675,6 +729,14 @@ namespace Domaci2
                 isValidId = true;
 	        } while (!isValidId);
             //amount je ali treba pretvorit u double u transakcijama "amount", amount.tosting("f2")
+            
+            bool confirmation = ConfirmationDialog("brisati");
+            if (!confirmation)
+	        {
+                Console.WriteLine("Prekinuli ste proces brisanja. Transakcije se ne brišu.");
+                Console.ReadKey();
+                return;
+	        }
             var accountTransactions = transactions[userId][accountType];
             List<Dictionary<string,string>> transactionsToRemove = new List<Dictionary<string, string>>();
 
@@ -708,6 +770,13 @@ namespace Domaci2
         }     
         static void DeleteTransactionBasedOnType(string userId, string accountType, string type)
         {
+            bool confirmation = ConfirmationDialog("brisati");
+            if (!confirmation)
+	        {
+                Console.WriteLine("Prekinuli ste proces brisanja. Transakcije se ne brišu.");
+                Console.ReadKey();
+                return;
+	        }
             List<Dictionary<string,string>> transactionsToDelete = new List<Dictionary<string, string>>();
             var accountTransactions = transactions[userId][accountType];
             foreach (var transaction in accountTransactions)
@@ -754,7 +823,13 @@ namespace Domaci2
 	            }
                 isValidCategory = true;
 	        } while (!isValidCategory);
-
+            bool confirmation = ConfirmationDialog("brisati");
+            if (!confirmation)
+	        {
+                Console.WriteLine("Prekinuli ste proces brisanja. Transakcije se ne brišu.");
+                Console.ReadKey();
+                return;
+	        }
             List<Dictionary<string,string>> transactionsToDelete = new List<Dictionary<string, string>>();
             foreach (var transaction in accountTransactions)
 	        {
