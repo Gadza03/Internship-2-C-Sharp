@@ -506,7 +506,7 @@ namespace Domaci2
             while (true)
 	        {
                 Console.Clear();
-                Console.WriteLine("Odabreite neko od ovih kategorija: ");
+                Console.WriteLine("Odabreite neku od ovih kategorija: ");
                 if (type == "prihod")
 	            {
                     Console.Write(string.Join(", ", income));
@@ -597,6 +597,26 @@ namespace Domaci2
 
         }
         //display financials
+        static DateTime ChooseMonthAndYear()
+        {
+            Console.Clear();            
+            DateTime isCorrectDate;
+            bool isValid = false;
+            do
+            {
+                Console.Clear();
+                Console.Write("Unesite godinu i mjesec u formatu yyyy/MM: ");                
+                if (!DateTime.TryParse(Console.ReadLine(), out isCorrectDate))
+                {
+                    Console.WriteLine("Nepravilan unos datuma rođenja molimo vas da unesete u obliku (YYYY/MM).");
+                    Console.ReadKey();
+                    continue;
+                }
+                isValid = true;        
+            } while (!isValid);
+
+            return isCorrectDate;
+        }
         static double SumAmountsOfTransactions(List<Dictionary<string,string>> transactionList)
         {
             double sum = 0;
@@ -606,31 +626,87 @@ namespace Domaci2
 	        }
             return sum;
         }
-        static void DisplayTotalIncomeExpenseByMonthYear(string userId, string accountType)
+        static void DisplayAverageTransactionByCategory(string userId, string accountType)
         {
-            Console.Clear();
             var transactionList = transactions[userId][accountType];
-            
-            DateTime isCorrectDate;
-            bool isValid = false;
-    
-            // Petlja dok korisnik ne unese ispravan format
+            bool isValidCategory = false;
+            string enteredCat;
             do
-            {
+	        {
                 Console.Clear();
-                Console.Write("Unesite godinu i mjesec u formatu yyyy/MM: ");
-                
-                if (!DateTime.TryParse(Console.ReadLine(), out isCorrectDate))
-                {
-                    Console.WriteLine("Nepravilan unos datuma rođenja molimo vas da unesete u obliku (YYYY/MM).");
+                Console.Write("Unesite kategoriju koju zelite prikazati: ");
+                enteredCat = Console.ReadLine().ToLower();
+                if (!income.Contains(enteredCat) && !expense.Contains(enteredCat))
+	            {
+                    Console.WriteLine("Unesena kategorija ne postoji. Pokusajte ponovno.");
                     Console.ReadKey();
                     continue;
-                }
-                isValid = true;
-        
-            } while (!isValid);
-            var enteredDate = isCorrectDate;
-         
+	            }
+                isValidCategory = true;
+	        } while (!isValidCategory);
+            var transactionsWithCategory = transactionList.Where(t => t["category"] == enteredCat).ToList();
+            if (transactionsWithCategory.Count == 0)
+                 Console.WriteLine($"Nema zabilježenjih transakcija u {enteredCat} kategoriji.");
+            else
+            {
+                var transactionsCategorySum = SumAmountsOfTransactions(transactionsWithCategory);
+
+                var averageTransactionAmount = transactionsCategorySum / transactionsWithCategory.Count;
+                Console.WriteLine($"Prosjecni iznos transakcije za {enteredCat} kategoriju"+
+                                    $"iznosi {averageTransactionAmount:F2}");
+            }
+            Console.ReadKey();
+
+        }
+        static void DisplayAverageTransactionByMonthYear(string userId, string accountType)
+        {
+            var enteredDate = ChooseMonthAndYear();
+            var transactionList = transactions[userId][accountType];
+            Console.Clear();
+
+            var transactionListForMonthAndYear = transactionList.Where(t => 
+            {
+                var dateTime = DateTime.Parse(t["dateTime"]);
+                return dateTime.Year == enteredDate.Year && dateTime.Month == enteredDate.Month;
+            }).ToList();
+
+            if (transactionListForMonthAndYear.Count == 0)
+                 Console.WriteLine($"Nema zabilježenjih transakcija u {enteredDate.Month}. mjesec {enteredDate.Year} godine.");
+            else
+            {
+                var transactionSum = SumAmountsOfTransactions(transactionListForMonthAndYear);
+                var averageTransactionAmount = transactionSum / transactionListForMonthAndYear.Count;
+            
+                Console.WriteLine($"Prosjecni iznos transakcije za {enteredDate.Month}. mjesec u {enteredDate.Year} godini"+
+                                    $"iznosi {averageTransactionAmount:F2}");
+            }
+            Console.ReadKey();
+        }
+        static void DisplayExpensePercentageForCategory(string userId, string accountType)
+        {
+            string category = GetCategory("rashod");
+            var transactionList = transactions[userId][accountType];
+            var transactionListCategory = transactionList.Where(t => t["type"] == "rashod" && t["category"] == category).ToList();
+            var transactionListExpense = transactionList.Where(t => t["type"] == "rashod").ToList();
+            Console.Clear();
+            
+            if (transactionListExpense.Count == 0)	      
+                Console.WriteLine("Korisnik nema nikakve rashode.");
+            else
+            {
+                double categorySum = SumAmountsOfTransactions(transactionListCategory);
+                double expenseSum = SumAmountsOfTransactions(transactionListExpense);
+                var percentage = (categorySum / expenseSum) * 100;
+                Console.WriteLine($"Postotak udjela rashoda za kategoriju {category}: {percentage:F2}%");
+            }
+            Console.ReadKey(); 
+        }
+        static void DisplayTotalIncomeExpenseByMonthYear(string userId, string accountType)
+        {
+            
+            var transactionList = transactions[userId][accountType];
+            var enteredDate = ChooseMonthAndYear();
+            
             var transactionListIncome = transactionList.Where(t => 
             {
                 var dateTime = DateTime.Parse(t["dateTime"]);
@@ -702,13 +778,13 @@ namespace Domaci2
                         DisplayTotalIncomeExpenseByMonthYear(userId, accountType);
                         break;
                     case "4":
-                        //DisplayExpensePercentageForCategory(userId, accountType);
+                        DisplayExpensePercentageForCategory(userId, accountType);
                         break;
                     case "5":
-                        //DisplayAverageTransactionByMonthYear(userId, accountType);
+                        DisplayAverageTransactionByMonthYear(userId, accountType);
                         break;
                     case "6":
-                        //DisplayAverageTransactionByCategory(userId, accountType);
+                        DisplayAverageTransactionByCategory(userId, accountType);
                         break;
                     case "0":
                         exit = true;
@@ -1306,8 +1382,6 @@ namespace Domaci2
             Console.WriteLine("Transakcija uspješno dodana");           
             Console.ReadKey();
         }
-        //print transactions
-        
         static void EnterTransactionMenu(string userId,string accountType)
         {
             bool exit = false;
