@@ -56,7 +56,7 @@ namespace Domaci2
                 {"ziro", 0.00 },
                 {"prepaid", 0.00 }
             };
-
+            
             AddTransactionToUser(lastUserId.ToString(), "tekuci", 23.55, "prihod","placa","Isplacena placa", "2024/07/31 08:30" );
             AddTransactionToUser(lastUserId.ToString(), "tekuci", 1500.00, "prihod", "placa", "Mjesecna plata za listopad", "2024/10/31 08:30");
             AddTransactionToUser(lastUserId.ToString(), "tekuci", 550.00, "rashod", "stanarina", "Stanarina za studeni", "2024/11/01 10:00");
@@ -90,6 +90,7 @@ namespace Domaci2
             string newDate;
             while (true)
             {
+                Console.Clear();
                 Console.Write("Unesite novi datum rođenja (yyyy/mm/dd) - ");
 
                 DateTime isCorrectDate;
@@ -343,6 +344,7 @@ namespace Domaci2
                 Console.WriteLine("4 - Pregled korisnika");
                 Console.WriteLine("0 - Vrati se nazad");
                 string enteredValue = Console.ReadLine();
+                
                 switch (enteredValue)
                 {
                     case "1":
@@ -370,7 +372,7 @@ namespace Domaci2
             }
         }
 
-        //account part -userId -accountType
+        //account part -userId -accountType67
         static void AccountInDeficit()
                 {
                     bool isInMinus = false;
@@ -394,7 +396,7 @@ namespace Domaci2
                 }
         static void UserValidation()
         {
-            /*
+            
             string name;
             string surname;
             string userId;
@@ -417,8 +419,8 @@ namespace Domaci2
                     Console.ReadKey();
                     continue;
                 }
-	        }*/
-            ChooseAccount("1");
+	        }
+            ChooseAccount(userId);
         }
         static void ChooseAccount(string userId)
         {
@@ -596,6 +598,143 @@ namespace Domaci2
 
 
         }
+        //bonus -intern and -extern transactions
+        static double CheckAmoutOfTransaction(double currentAccountAmount)
+        {
+            double amount = 0;
+            bool isValid = false;
+            do
+	        {
+                Console.Clear();
+                amount = GetAmount();
+                if (amount > currentAccountAmount)
+                {
+                    Console.WriteLine("Transackiju je nemoguće izvršiti unijeli ste veći iznos nego što je vaš saldo.");
+                    Console.ReadKey();
+                    continue;
+                }
+                isValid = true;    
+	        } while (!isValid);
+            return amount;
+        }
+        static void AddTransctionToList(string userId, string accountType, double amount, string type, string description)
+        {
+            uniqueTransactionId++;
+            var transactionIntern = new Dictionary<string, string>()
+            {
+                { "id", uniqueTransactionId.ToString() },
+                { "amount", amount.ToString("F2") },
+                { "type", type },
+                { "category", description },
+                { "description", "prijenos" },
+                { "dateTime", DateTime.Now.ToString() }
+            };
+                    
+            transactions[userId][accountType].Add(transactionIntern);    
+            Console.ReadKey();
+        }
+        static void InternTransaction(string userId, string accountType, double amount)
+        {
+            
+            Console.Clear();            
+            Console.WriteLine($"Stanje prije transakcije: {accounts[userId][accountType]}$");
+            accounts[userId][accountType] += amount;
+            Console.WriteLine($"Transackija od {amount}$ je uspješno izvršena na vaš {accountType} racun.\nTrenutno stanje: {accounts[userId][accountType]}$");
+            AddTransctionToList(userId, accountType, amount, "prihod", "interni prihod");
+            
+        }
+        static void ExternTransactionMenu(string userId, string accountType)
+        {
+            bool isValid = false;
+            string enteredId;
+            
+            do
+	        {
+                Console.Clear();
+                Console.Write("Unesite ID korisnika kojem želite napraviti transakciju: ");
+                enteredId = Console.ReadLine().Trim();
+                var userFounded = users.Any(user => user["id"] == enteredId);
+                if(userFounded)
+                    isValid = true;
+                else
+                {
+                    Console.WriteLine("Ne postoji uneseni ID. Pokusajte ponvno.");
+                    Console.ReadKey();
+                    continue;
+                }
+	        } while (!isValid);
+            double amount = CheckAmoutOfTransaction(accounts[userId][accountType]);
+
+            Console.WriteLine($"Stanje vašeg racuna prije slanja transakcije: {accounts[userId][accountType]}$");
+            accounts[userId][accountType] -= amount;
+            AddTransctionToList(userId, accountType, amount, "rashod", "eksterni rashod");
+            Console.WriteLine($"Stanje vašeg racuna nakon slanja transakcije: {accounts[userId][accountType]}$");     
+
+            accounts[enteredId]["tekuci"] += amount;
+            AddTransctionToList(enteredId, "tekuci", amount, "prihod", "eksterni prihod");                   
+            
+
+        }    
+        static void InternTransactionMenu(string userId, string accountType)
+        {
+            var userAccounts = accounts[userId];
+            var currentAccountAmount = accounts[userId][accountType];
+            bool isValidAcount = false;
+            string enteredAcountType, firstAvailableAcc = "", secondAvailableAcc = "";
+            
+            do
+	        {
+                Console.Clear();
+                Console.WriteLine($"Nalazite se na računu {accountType} i vaš saldo na njemu je {currentAccountAmount}$\n" +
+                                    $"Dostupni računi za internu transakciju: \n");
+                                    
+                int counter = 0;
+                foreach (var account in userAccounts.Keys)
+	            {
+                    if (account != accountType)
+                    {
+                        counter++;
+                        if (counter == 1)
+                            firstAvailableAcc = account;
+                        else if (counter == 2)
+                            secondAvailableAcc = account;
+
+                        Console.WriteLine($"{counter} - {account}");
+                    }
+	            }
+                Console.WriteLine("0 - Izlaz");
+                Console.Write("Odaberite na koji račun zelite isvršiti transakciju: ");   
+                enteredAcountType = Console.ReadLine().Trim().ToLower();
+                double amountOfTransaction;
+                switch (enteredAcountType)
+	            {
+                    case "1":                        
+                        amountOfTransaction = CheckAmoutOfTransaction(currentAccountAmount);
+                        accounts[userId][accountType] -= amountOfTransaction;                        
+                        InternTransaction(userId, firstAvailableAcc, amountOfTransaction);
+                        AddTransctionToList(userId, accountType, amountOfTransaction, "rashod", "interni rashod");
+                        break;
+                    case "2":
+                        amountOfTransaction = CheckAmoutOfTransaction(currentAccountAmount);
+                        accounts[userId][accountType] -= amountOfTransaction;                        
+                        InternTransaction(userId, secondAvailableAcc, amountOfTransaction);
+                        AddTransctionToList(userId, accountType, amountOfTransaction, "rashod", "interni rashod");
+                        break;
+                    case "0":
+                        break;
+		            default:
+                        Console.WriteLine("Pogrešan unos. Unestie neki od dostupnih racuna brojkom (1-2).");
+                        Console.ReadKey();
+                        continue;
+	            }            
+                isValidAcount = true;
+	        } while (!isValidAcount);           
+            
+            
+        }
+       
+
+
         //display financials
         static DateTime ChooseMonthAndYear()
         {
@@ -653,7 +792,7 @@ namespace Domaci2
 
                 var averageTransactionAmount = transactionsCategorySum / transactionsWithCategory.Count;
                 Console.WriteLine($"Prosjecni iznos transakcije za {enteredCat} kategoriju"+
-                                    $"iznosi {averageTransactionAmount:F2}");
+                                    $"iznosi {averageTransactionAmount:F2}$");
             }
             Console.ReadKey();
 
@@ -671,14 +810,14 @@ namespace Domaci2
             }).ToList();
 
             if (transactionListForMonthAndYear.Count == 0)
-                 Console.WriteLine($"Nema zabilježenjih transakcija u {enteredDate.Month}. mjesec {enteredDate.Year} godine.");
+                 Console.WriteLine($"Nema zabilježenjih transakcija u {enteredDate.Month}. mjesec {enteredDate.Year}. godine.");
             else
             {
                 var transactionSum = SumAmountsOfTransactions(transactionListForMonthAndYear);
                 var averageTransactionAmount = transactionSum / transactionListForMonthAndYear.Count;
             
-                Console.WriteLine($"Prosjecni iznos transakcije za {enteredDate.Month}. mjesec u {enteredDate.Year} godini"+
-                                    $"iznosi {averageTransactionAmount:F2}");
+                Console.WriteLine($"Prosjecni iznos transakcije za {enteredDate.Month}. mjesec u {enteredDate.Year}. godini"+
+                                    $"iznosi {averageTransactionAmount:F2}$");
             }
             Console.ReadKey();
         }
@@ -720,13 +859,13 @@ namespace Domaci2
             }).ToList();           
 
             if (transactionListIncome.Count == 0 && transactionListExpense.Count == 0)
-                Console.WriteLine($"Nema zabilježenjih transakcija u {enteredDate.Month}. mjesec {enteredDate.Year} godine.");
+                Console.WriteLine($"Nema zabilježenjih transakcija u {enteredDate.Month}. mjesec {enteredDate.Year}. godine.");
             else
             {
                 double incomeSum = SumAmountsOfTransactions(transactionListIncome);
                 double expenseSum = SumAmountsOfTransactions(transactionListExpense);
                 Console.Clear();
-                Console.WriteLine($"Ukupan iznos prihoda i rashoda za {enteredDate.Month}. mjesec {enteredDate.Year} godine -");
+                Console.WriteLine($"Ukupan iznos prihoda i rashoda za {enteredDate.Month}. mjesec {enteredDate.Year}. godine -");
                 Console.WriteLine($"Prihodi - {incomeSum.ToString()}$");
                 Console.WriteLine($"Rashodi - {expenseSum.ToString()}$");
             }          
@@ -960,6 +1099,10 @@ namespace Domaci2
         }
         static void PrintTransactions(List<Dictionary<string, string>> transactionList)
         {
+            if (transactionList.Count == 0)
+	        {
+                Console.WriteLine("Ne postoje transakcije za trazeni tip.");
+	        }
             foreach (var transaction in transactionList)
                     {
                         
@@ -1039,7 +1182,7 @@ namespace Domaci2
             do
 	        {
                 Console.Clear();
-                Console.Write("Unesite ID transakcije koju zelite urediti (Enter - korak nazad): ");
+                Console.Write("Unesite ID transakcije koju zelite urediti (Enter - korak nazad): ");                
                 enteredId = Console.ReadLine();
                 if (enteredId == "")
                     return;
@@ -1423,6 +1566,9 @@ namespace Domaci2
                 Console.WriteLine("3 - Uređivanje transakcije");
                 Console.WriteLine("4 - Pregled transakcija");
                 Console.WriteLine("5 - Financijsko izvješće");
+                Console.WriteLine("6 - Interna transakcija");
+                Console.WriteLine("7 - Eksterna transakcija");
+
                 Console.WriteLine("0 - Vrati se nazad");
 
                 string enteredValue = Console.ReadLine();
@@ -1444,6 +1590,12 @@ namespace Domaci2
                     case "5":
                         FinancialReportMenu(userId, accountType);
                         break;
+                    case "6":
+                        InternTransactionMenu(userId, accountType);
+                        break;
+                    case "7":
+                        ExternTransactionMenu(userId, accountType);
+                        break;
                     case "0":
                         exit = true;
                         break;
@@ -1455,8 +1607,8 @@ namespace Domaci2
             }
         }
 
-        static List<string> income = new List<string>{"placa","honorar", "bonus", "penzija","nasljedstvo","povrat poreza","ostalo"};
-        static List<string> expense = new List<string>{"hrana","stanarina", "zdravstvo", "obrazovanje","prijevoz","sport i rekreacija","zabava", "ostalo"};    
+        static List<string> income = new List<string>{"placa","honorar", "bonus", "penzija","nasljedstvo","povrat poreza","interni prihod","ostalo"};
+        static List<string> expense = new List<string>{"hrana","stanarina", "zdravstvo", "obrazovanje","prijevoz","sport i rekreacija","zabava","interni rashod", "ostalo"};    
         static List<Dictionary<string, string>> users = new List<Dictionary<string, string>>();
         static int lastUserId = 0;
         static int uniqueTransactionId = 0;
